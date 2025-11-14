@@ -1,7 +1,14 @@
+import itertools
 from pathlib import Path
 import re
 import json
 from datetime import datetime, timedelta
+
+CONTINUOUS_THRESHOLD = 6 # 6 分钟内有绘画记录就认为能打 combo
+
+def get_30_mins_before() -> datetime:
+    now = datetime.now()
+    return now - timedelta(minutes=30)
 
 def get_today_start() -> datetime:
     """获取今天开始日期（30小时制下的）"""
@@ -24,30 +31,70 @@ def get_month_start() -> datetime:
     month_start = today_start.replace(day=1)
     return month_start
 
+def format_timedelta(td: timedelta):
+    total_seconds = int(td.total_seconds())
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-def get_drawtimes() -> tuple[int, int, int]:
+def get_history():
+    last_time = None
+    continuous_duration = 0
+    
+    with open(Path.home()/'.kra_history/history', 'rt', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line: continue 
+            
+            datetime_str, *_, seconds = line.split('##')
+            draw_time = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+            
+            # 计算连续绘画时间
+            if last_time is not None:
+                time_diff = (draw_time - last_time).total_seconds() / 60  # 转换为分钟
+                if time_diff <= CONTINUOUS_THRESHOLD:  # 6 分钟以内认为是连续的
+                    continuous_duration += time_diff
+                else:
+                    continuous_duration = 0  # 超过 6 分钟，重置连续时间
+            else:
+                continuous_duration = 0  # 第一条记录
+            last_time = draw_time
+            yield draw_time, int(seconds), int(continuous_duration)
+
+def get_drawtimes():
     """today, week, month, in seconds"""
 
-    history = (Path.home()/'.kra_history/history').read_text(encoding='utf-8')
-    history = [i.strip() for i in re.split(r'\r?\n', history) if i.strip()]
     today_sum, week_sum, month_sum = 0, 0, 0
     today_start, week_start, month_start = get_today_start(), get_week_start(), get_month_start()
-    for line in history:
-        datetime_str, *_, seconds = line.split('##')
-        draw_time = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+
+    _30_mins_before_num = 0
+    _30_mins_before = get_30_mins_before()
+
+    today_combos = []
+    last_record = None
+    for draw_time, seconds, continuous_duration in get_history():
         if draw_time >= today_start:
-            today_sum += int(seconds)
+            today_sum += seconds
+            if continuous_duration == 0 and last_record and last_record[2] != 0:
+                today_combos.append({'combo_start_time': f'{last_record[0] - timedelta(minutes=last_record[2]):%Y-%m-%d %H:%M:%S}', 'combo_end_time': f'{last_record[0]:%Y-%m-%d %H:%M:%S}', 'combo': last_record[2]})
+            last_record = draw_time, seconds, continuous_duration
+
         if draw_time >= week_start:
-            week_sum += int(seconds)
+            week_sum += seconds
         if draw_time >= month_start:
-            month_sum += int(seconds)
-    return today_sum, week_sum, month_sum
+            month_sum += seconds
+        if draw_time >= _30_mins_before:
+            _30_mins_before_num += seconds
 
-today, week, month = get_drawtimes()
+    return {
+        'today': today_sum,
+        'week': week_sum,
+        'month': month_sum,
+        'latest_drawtime': f'{draw_time:%Y-%m-%d %H:%M:%S}',
+        '30_mins_before': _30_mins_before_num,
+        'current_combo': 0 if (datetime.now() - draw_time).total_seconds() > 60 * CONTINUOUS_THRESHOLD else continuous_duration,
+        'today_combos': today_combos,
+    }
 
-response = {
-    'today': today,
-    'week': week,
-    'month': month,
-}
-print(json.dumps(response, ensure_ascii=False))
+print(json.dumps(get_drawtimes(), ensure_ascii=False))

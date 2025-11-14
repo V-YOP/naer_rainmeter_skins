@@ -20,6 +20,10 @@ function Initialize()
     monthPercent = 0
     monthPercentMulti100 = 0
 
+    current_combo = 0
+    thirtyMinsBeforeTime = 0
+    delta_to_last_drawtime = ''
+
     counter = 0 
     -- 立即执行一次获取数据
     Update()
@@ -29,6 +33,19 @@ function roundToOneDecimal(num)
     return math.floor(num * 10 + 0.5) / 10  -- 四舍五入到1位小数
 end
 
+function getTimeDifference(timeStr)
+    -- 计算给定日期和当前日期的时间差并使用 HH:MM:SS 去表示
+    local y, m, d, H, M, S = timeStr:match("(%d+)-(%d+)-(%d+) (%d+):(%d+):(%d+)")
+    local diff = os.time() - os.time({year=y, month=m, day=d, hour=H, min=M, sec=S})
+    
+    local h = math.floor(diff / 3600)
+    local m = math.floor((diff % 3600) / 60)
+    local s = diff % 60
+    
+    return string.format("%02d:%02d:%02d", h, m, s)
+end
+
+
 function setTodayCurrentTime(v)
     todayPercent = v / todayExpectTime
     todayPercentMulti100 = roundToOneDecimal(todayPercent * 100)
@@ -37,13 +54,13 @@ end
 
 function setWeekCurrentTime(v)
     weekPercent= v / weekExpectTime
-    weekPercentMulti100= roundToOneDecimal(weekPercent * 100)
+    weekPercentMulti100 = roundToOneDecimal(weekPercent * 100)
     weekCurrentTime = roundToOneDecimal(v)
 end
 
 function setMonthCurrentTime(v)
     monthPercent= v / monthExpectTime
-    monthPercentMulti100= roundToOneDecimal(monthPercent * 100)
+    monthPercentMulti100 = roundToOneDecimal(monthPercent * 100)
     monthCurrentTime = roundToOneDecimal(v)
 end
 
@@ -55,30 +72,12 @@ function Update()
     end
     counter = counter + 1
     local response = json.decode(SKIN:GetMeasure('MeasureScript'):GetStringValue())
+    delta_to_last_drawtime = getTimeDifference(response['latest_drawtime'])
+    thirtyMinsBeforeTime = response['30_mins_before'] / 1500 -- 半小时的窗口，最大值是 1800 秒，但这里松一些，1500 秒就是1
+    current_combo = response['current_combo']
+    
     setTodayCurrentTime(response['today'] / 3600)
     setWeekCurrentTime(response['week'] / 3600)
     setMonthCurrentTime(response['month'] / 3600)
-    -- 调用 Python 脚本并获取输出
-    -- local command = 'python "' .. SKIN:GetVariable('CURRENTPATH') .. 'painting_time.py"'
-    -- print(os.execute)
-    -- local handle = io.popen(command)
-    
-    -- if handle then
-    --     local result = handle:read("*a")
-    --     handle:close()
-        
-    --     -- 解析输出 (格式: "0.3 2.0")
-    --     if result and result ~= "" then
-    --         local values = {}
-    --         for value in string.gmatch(result, "%S+") do
-    --             table.insert(values, value)
-    --         end
-            
-    --         if #values >= 2 then
-    --             currentTime = values[1]
-    --             expectTime = values[2]
-    --         end
-    --     end
-    -- end
 end
 
