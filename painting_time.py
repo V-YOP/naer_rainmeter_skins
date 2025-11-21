@@ -4,7 +4,7 @@ import re
 import json
 from datetime import datetime, timedelta
 
-CONTINUOUS_THRESHOLD = 6 # 6 分钟内有绘画记录就认为能打 combo
+CONTINUOUS_THRESHOLD = 15 # X 分钟内有绘画记录就认为能打 combo
 
 def get_30_mins_before() -> datetime:
     now = datetime.now()
@@ -89,7 +89,7 @@ def get_drawtimes():
 
     return {
         'today': today_sum,
-        'week': week_sum,
+        'week': week_sum, 
         'month': month_sum,
         'latest_drawtime': f'{draw_time:%Y-%m-%d %H:%M:%S}',
         '30_mins_before': _30_mins_before_num,
