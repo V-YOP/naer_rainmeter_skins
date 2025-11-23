@@ -6,6 +6,11 @@ ENCODING = 'GBK'
 
 REMARK_FILE = Path(__file__).parent/'remark.txt'
 
+try:
+    import ctypes
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)  # DPI
+except: pass
+
 def on_submit(event=None):
     """处理用户输入"""
     user_input = entry.get().strip()

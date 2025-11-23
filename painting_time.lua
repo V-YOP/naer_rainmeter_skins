@@ -1,5 +1,15 @@
 
 function Initialize()
+    -- 动态创建一个文本 Meter
+    SKIN:Bang('!SetOption', 'MeterDynamicText', 'Meter', 'String')
+    SKIN:Bang('!SetOption', 'MeterDynamicText', 'MeterStyle', 'MyTextStyle')
+    SKIN:Bang('!SetOption', 'MeterDynamicText', 'Text', '这是动态创建的文本！')
+    SKIN:Bang('!SetOption', 'MeterDynamicText', 'X', '50')
+    SKIN:Bang('!SetOption', 'MeterDynamicText', 'Y', '50')
+    SKIN:Bang('!SetOption', 'MeterDynamicText', 'Hidden', '0')
+    SKIN:Bang('!UpdateMeter', 'MeterDynamicText')
+    SKIN:Bang('!Redraw')
+
     json = loadfile(SKIN:MakePathAbsolute('dkjson.lua'))()
     -- 初始化变量
     -- TODO 把 expect 挪到 variable
@@ -68,10 +78,10 @@ function Update()
     -- 执行python的更新脚本
     if counter % 60 == 0 then
         print('BANG!')
-        SKIN:Bang('!CommandMeasure', 'MeasureScript', 'Run')
+        SKIN:Bang('!CommandMeasure', 'MeasurePaintingTimeScript', 'Run')
     end
     counter = counter + 1
-    local response = json.decode(SKIN:GetMeasure('MeasureScript'):GetStringValue())
+    local response = json.decode(SKIN:GetMeasure('MeasurePaintingTimeScript'):GetStringValue())
     delta_to_last_drawtime = getTimeDifference(response['latest_drawtime'])
     thirtyMinsBeforeTime = response['30_mins_before'] / 1500 -- 半小时的窗口，最大值是 1800 秒，但这里松一些，1500 秒就是1
     current_combo = response['current_combo']

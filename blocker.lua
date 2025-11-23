@@ -15,8 +15,6 @@ function Initialize()
     remarkFilePath = SKIN:MakePathAbsolute('remark.txt')
 end
 
-
-
 function Update()
     return readFile(remarkFilePath)
 end
