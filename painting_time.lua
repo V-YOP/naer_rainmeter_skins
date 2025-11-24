@@ -5,16 +5,28 @@ function Initialize()
     -- TODO 把 expect 挪到 variable
     -- 但 tm 怎么可能会有这种必要？
 
+    todayA = 0
+    todayB = 0
+    todayC = 0
+
     todayCurrentTime = 0
     todayExpectTime = 2
     todayPercent = 0
     todayPercentMulti100 = 0
     
+    weekA = 0
+    weekB = 0
+    weekC = 0
+
     weekCurrentTime = 0
     weekExpectTime = 20
     weekPercent = 0
     weekPercentMulti100 = 0
     
+    monthA = 0
+    monthB = 0
+    monthC = 0
+
     monthCurrentTime = 0
     monthExpectTime = 80
     monthPercent = 0
@@ -23,6 +35,8 @@ function Initialize()
     current_combo = 0
     thirtyMinsBeforeTime = 0
     delta_to_last_drawtime = ''
+
+    last_days = 0
 
     counter = 0 
     -- 立即执行一次获取数据
@@ -53,13 +67,13 @@ function setTodayCurrentTime(v)
 end
 
 function setWeekCurrentTime(v)
-    weekPercent= v / weekExpectTime
+    weekPercent = v / weekExpectTime
     weekPercentMulti100 = roundToOneDecimal(weekPercent * 100)
     weekCurrentTime = roundToOneDecimal(v)
 end
 
 function setMonthCurrentTime(v)
-    monthPercent= v / monthExpectTime
+    monthPercent = v / monthExpectTime
     monthPercentMulti100 = roundToOneDecimal(monthPercent * 100)
     monthCurrentTime = roundToOneDecimal(v)
 end
@@ -79,7 +93,18 @@ function Update()
     delta_to_last_drawtime = getTimeDifference(response['latest_drawtime'])
     thirtyMinsBeforeTime = response['30_mins_before'] / 1500 -- 半小时的窗口，最大值是 1800 秒，但这里松一些，1500 秒就是1
     current_combo = response['current_combo']
-    
+    last_days = response['last_days']
+
+    todayA = roundToOneDecimal(response['today_A'] / 3600)
+    todayB = roundToOneDecimal(response['today_B'] / 3600)
+    todayC = roundToOneDecimal(response['today_C'] / 3600)
+    weekA = roundToOneDecimal(response['week_A'] / 3600)
+    weekB = roundToOneDecimal(response['week_B'] / 3600)
+    weekC = roundToOneDecimal(response['week_C'] / 3600)
+    monthA = roundToOneDecimal(response['month_A'] / 3600)
+    monthB = roundToOneDecimal(response['month_B'] / 3600)
+    monthC = roundToOneDecimal(response['month_C'] / 3600)
+
     setTodayCurrentTime(response['today'] / 3600)
     setWeekCurrentTime(response['week'] / 3600)
     setMonthCurrentTime(response['month'] / 3600)

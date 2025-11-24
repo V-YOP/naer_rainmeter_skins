@@ -16,7 +16,7 @@ class BlockRule:
     msg: str
 
 RULES = [
-    BlockRule("tim.exe", ["0600-2000"], '白天不要看 QQ，很坏！'),
+    BlockRule("tim.exe", ["0800-1130", "1300-2000"], '白天不要看 QQ，很坏！'),
 ]
 
 def kill_blocked_processes(block_rules: List[BlockRule]) -> List[str]:
